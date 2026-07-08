@@ -58,7 +58,9 @@ class MaRadioCard extends HTMLElement {
                 autocomplete="off"
               >
             </div>
-            <ha-icon-button id="ma-radio-btn" class="ma-radio-play-btn" icon="mdi:play" disabled></ha-icon-button>
+            <button id="ma-radio-btn" class="ma-radio-play-btn" disabled>
+              <ha-icon icon="mdi:play"></ha-icon>
+            </button>
           </div>
 
           <div id="ma-radio-status" class="ma-radio-chip ma-radio-status"></div>
@@ -186,19 +188,31 @@ class MaRadioCard extends HTMLElement {
 
         /* Play button - using ha-icon-button with icon attribute */
         .ma-radio-play-btn {
-          --mdc-icon-button-size: var(--control-height);
-          --mdc-icon-size: 20px;
-          --mdc-icon-button-ink-color: rgb(var(--rgb-primary-color, 3, 169, 244));
+          width: var(--control-height);
+          height: var(--control-height);
           flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          cursor: pointer;
           border-radius: var(--icon-border-radius);
           background: rgba(var(--rgb-primary-color, 3, 169, 244), 0.15);
           color: rgb(var(--rgb-primary-color, 3, 169, 244));
           transition: opacity 280ms ease-out;
+          padding: 0;
+          box-sizing: border-box;
+          -webkit-tap-highlight-color: transparent;
         }
-        .ma-radio-play-btn[disabled] {
+        .ma-radio-play-btn:disabled {
           opacity: 0.4;
+          cursor: default;
         }
-        .ma-radio-play-btn.loading {
+        .ma-radio-play-btn ha-icon {
+          --mdc-icon-size: 20px;
+          display: flex;
+        }
+        .ma-radio-play-btn.loading ha-icon {
           animation: ma-radio-spin 0.8s linear infinite;
         }
         @keyframes ma-radio-spin {
