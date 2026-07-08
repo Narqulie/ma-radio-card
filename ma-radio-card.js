@@ -43,7 +43,7 @@ class MaRadioCard extends HTMLElement {
             </div>
             <div class="ma-radio-state-info">
               <span class="ma-radio-primary">${this._escapeHtml(this._config.title)}</span>
-              <span class="ma-radio-secondary" id="ma-radio-subtitle">Search to start a radio</span>
+              <span class="ma-radio-secondary" id="ma-radio-subtitle">Search to start a radio (build 2026-07-08.3)</span>
             </div>
           </div>
 
@@ -188,6 +188,7 @@ class MaRadioCard extends HTMLElement {
         .ma-radio-play-btn {
           --mdc-icon-button-size: var(--control-height);
           --mdc-icon-size: 20px;
+          --mdc-icon-button-ink-color: rgb(var(--rgb-primary-color, 3, 169, 244));
           flex-shrink: 0;
           border-radius: var(--icon-border-radius);
           background: rgba(var(--rgb-primary-color, 3, 169, 244), 0.15);
@@ -298,7 +299,7 @@ class MaRadioCard extends HTMLElement {
     this._clearLog();
     this._status.textContent = "Searching...";
     this._status.style.display = "";
-    this._subtitle.textContent = "Searching...";
+    this._subtitle.textContent = "Searching... (build 2026-07-08.3)";
 
     try {
       const result = await this._hass.callWS({
@@ -330,7 +331,7 @@ class MaRadioCard extends HTMLElement {
         this._error.textContent = `No results for "${query}". Try a different search term.`;
         this._error.style.display = "";
         this._status.style.display = "none";
-        this._subtitle.textContent = "Search to start a radio";
+        this._subtitle.textContent = "Search to start a radio (build 2026-07-08.3)";
         this._loading = false;
         this._btn.classList.remove("loading");
         this._updateBtn();
@@ -363,7 +364,7 @@ class MaRadioCard extends HTMLElement {
       this._error.textContent = `Error: ${err.message || "Something went wrong"}`;
       this._error.style.display = "";
       this._status.style.display = "none";
-      this._subtitle.textContent = "Search to start a radio";
+      this._subtitle.textContent = "Search to start a radio (build 2026-07-08.3)";
       console.error("MA Radio Card error:", err);
     } finally {
       this._loading = false;
