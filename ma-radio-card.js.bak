@@ -29,7 +29,7 @@ class MaRadioCard extends HTMLElement {
       player_entity: config.player_entity || "",
     };
     if (!this._config.player_entity) {
-      console.warn("MA Radio Card: No player_entity configured  --  playback will not work until one is set.");
+      console.warn("MA Radio Card: No player_entity configured — playback will not work until one is set.");
     }
   }
 
@@ -54,7 +54,7 @@ class MaRadioCard extends HTMLElement {
                 type="text"
                 id="ma-radio-input"
                 class="ma-radio-input"
-                placeholder="Artist, genre, mood, playlist..."
+                placeholder="Artist, genre, mood, playlist…"
                 autocomplete="off"
               >
             </div>
@@ -265,9 +265,9 @@ class MaRadioCard extends HTMLElement {
     this._status.style.display = "none";
     this._error.style.display = "none";
     this._clearLog();
-    this._status.textContent = "Searching...";
+    this._status.textContent = "🔍 Searching…";
     this._status.style.display = "";
-    this._subtitle.textContent = "Searching...";
+    this._subtitle.textContent = "Searching…";
 
     try {
       const result = await this._hass.callWS({
@@ -308,10 +308,10 @@ class MaRadioCard extends HTMLElement {
 
       const typeLabel = bestType.charAt(0).toUpperCase() + bestType.slice(1);
       this._addLogItem(
-        `<span>Found: <strong>${this._escapeHtml(bestItem.name)}</strong> (${typeLabel}) -- starting radio...</span>`
+        `<span>✅ <strong>${this._escapeHtml(bestItem.name)}</strong> (${typeLabel}) · starting radio…</span>`
       );
 
-      this._status.textContent = `Starting radio: ${bestItem.name}`;
+      this._status.textContent = `▶ Playing: ${bestItem.name} radio`;
       this._status.style.display = "";
 
       await this._hass.callService(
@@ -325,9 +325,9 @@ class MaRadioCard extends HTMLElement {
         { entity_id: this._config.player_entity }
       );
 
-      this._status.textContent = `Now playing: ${bestItem.name}`;
+      this._status.textContent = `🎵 Radio: ${bestItem.name}`;
       this._subtitle.textContent = `Now playing: ${bestItem.name}`;
-      this._addLogItem(`<span>Playing on ${this._escapeHtml(this._config.player_entity)}</span>`);
+      this._addLogItem(`<span>📻 Playing on ${this._escapeHtml(this._config.player_entity)}</span>`);
     } catch (err) {
       this._error.textContent = `Error: ${err.message || "Something went wrong"}`;
       this._error.style.display = "";
