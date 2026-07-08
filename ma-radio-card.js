@@ -329,6 +329,9 @@ class MaRadioCard extends HTMLElement {
       });
 
       const response = result?.response || {};
+      // Note: MA search requests use singular media_type values ("artist", "album", "playlist",
+      // "radio") but its search response keys are plural ("artists", "playlists", "albums",
+      // "radio"). The .replace(/s$/, "") below converts back to singular for play_media.
       const typeOrder = ["artists", "playlists", "albums", "radio"];
       let bestItem = null;
       let bestType = null;
@@ -350,6 +353,10 @@ class MaRadioCard extends HTMLElement {
         this._btn.classList.remove("loading");
         this._updateBtn();
         return;
+      }
+
+      if (!bestItem.uri) {
+        throw new Error(`Search result "${bestItem.name}" has no playable URI`);
       }
 
       const typeLabel = bestType.charAt(0).toUpperCase() + bestType.slice(1);
