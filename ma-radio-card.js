@@ -36,81 +36,76 @@ class MaRadioCard extends HTMLElement {
     this.innerHTML = `
       <ha-card>
         <div class="ma-radio-content">
-          <div class="ma-radio-header">
-            <ha-icon icon="mdi:radio"></ha-icon>
-            <span>${this._escapeHtml(this._config.title)}</span>
-          </div>
-          <div class="ma-radio-input-row">
-            <ha-textfield
-              class="ma-radio-query"
-              label="Artist, genre, mood, playlist..."
+          <div class="ma-radio-row">
+            <input
+              type="text"
               id="ma-radio-input"
-            ></ha-textfield>
-            <ha-button id="ma-radio-btn" disabled>
-              ▶
-            </ha-button>
+              class="ma-radio-input"
+              placeholder="Artist, genre, mood, playlist…"
+              autocomplete="off"
+            >
+            <ha-button id="ma-radio-btn" disabled>▶</ha-button>
           </div>
-          <div id="ma-radio-status" class="ma-radio-status" style="display:none"></div>
-          <div id="ma-radio-error" class="ma-radio-error" style="display:none"></div>
+          <div id="ma-radio-status" class="ma-radio-msg ma-radio-status"></div>
+          <div id="ma-radio-error" class="ma-radio-msg ma-radio-error"></div>
           <div id="ma-radio-log" class="ma-radio-log"></div>
         </div>
       </ha-card>
       <style>
         .ma-radio-content {
-          padding: 16px;
+          padding: 12px 16px;
           display: flex;
           flex-direction: column;
           gap: 8px;
         }
-        .ma-radio-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 18px;
-          font-weight: 500;
-          margin-bottom: 4px;
-        }
-        .ma-radio-input-row {
+        .ma-radio-row {
           display: flex;
           gap: 8px;
           align-items: center;
         }
-        .ma-radio-query {
+        .ma-radio-input {
           flex: 1;
           min-width: 0;
+          height: 40px;
+          padding: 0 12px;
+          border: 1px solid var(--divider-color, rgba(0,0,0,0.12));
+          border-radius: 8px;
+          background: var(--input-fill, var(--card-background-color, #fff));
+          color: var(--primary-text-color, #000);
+          font-size: 15px;
+          font-family: var(--paper-font-body_-_font-family, inherit);
+          outline: none;
+          transition: border-color 0.2s;
+          box-sizing: border-box;
         }
-        ha-button#ma-radio-btn {
-          flex-shrink: 0;
+        .ma-radio-input:focus {
+          border-color: var(--primary-color, #03a9f4);
+        }
+        .ma-radio-input::placeholder {
+          color: var(--secondary-text-color, #999);
+        }
+        .ma-radio-msg {
+          font-size: 14px;
+          padding: 4px 0;
+          display: none;
         }
         .ma-radio-status {
           color: var(--primary-color, #03a9f4);
-          font-size: 14px;
-          padding: 4px 8px;
         }
         .ma-radio-error {
           color: var(--error-color, #db4437);
-          font-size: 14px;
-          padding: 8px;
-          background: rgba(219,68,55,0.08);
-          border-radius: 4px;
         }
         .ma-radio-log {
           font-size: 13px;
           color: var(--secondary-text-color, #727272);
-          padding: 2px 8px;
+          padding: 2px 0;
           min-height: 0;
         }
         .ma-radio-log .item {
-          padding: 2px 0;
+          padding: 3px 0;
           display: flex;
           align-items: center;
           gap: 6px;
-        }
-        .ma-radio-log .item img {
-          width: 28px;
-          height: 28px;
-          border-radius: 4px;
-          object-fit: cover;
         }
       </style>
     `;
@@ -123,13 +118,15 @@ class MaRadioCard extends HTMLElement {
 
     this._input.addEventListener("input", () => {
       this._query = this._input.value;
-      this._hideError();
+      this._error.style.display = "none";
       this._updateBtn();
     });
     this._input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") this._start();
     });
     this._btn.addEventListener("click", () => this._start());
+
+    this._updateBtn();
   }
 
   _updateBtn() {
@@ -138,26 +135,6 @@ class MaRadioCard extends HTMLElement {
       this._config.player_entity &&
       !this._loading
     );
-  }
-
-  _showStatus(msg) {
-    this._status.textContent = msg;
-    this._status.style.display = "";
-  }
-
-  _showError(msg) {
-    this._error.textContent = msg;
-    this._error.style.display = "";
-    this._status.style.display = "none";
-  }
-
-  _hideError() {
-    this._error.style.display = "none";
-  }
-
-  _hideMessages() {
-    this._status.style.display = "none";
-    this._error.style.display = "none";
   }
 
   _clearLog() {
@@ -178,14 +155,16 @@ class MaRadioCard extends HTMLElement {
   }
 
   async _start() {
-    const query = this._query.trim();
+    const query = this._input.value.trim();
     if (!query || !this._config.player_entity) return;
 
     this._loading = true;
     this._btn.disabled = true;
-    this._hideMessages();
+    this._status.style.display = "none";
+    this._error.style.display = "none";
     this._clearLog();
-    this._showStatus("🔍 Searching across all…");
+    this._status.textContent = "🔍 Searching…";
+    this._status.style.display = "";
 
     try {
       const result = await this._hass.callWS({
@@ -206,18 +185,17 @@ class MaRadioCard extends HTMLElement {
       let bestType = null;
 
       for (const key of typeOrder) {
-        const items = response[key];
-        if (items && items.length > 0) {
-          bestItem = items[0];
+        if (response[key] && response[key].length > 0) {
+          bestItem = response[key][0];
           bestType = key.replace(/s$/, "");
           break;
         }
       }
 
       if (!bestItem) {
-        this._showError(
-          `No results found for "${query}". Try a different search term.`
-        );
+        this._error.textContent = `No results for "${query}". Try a different search term.`;
+        this._error.style.display = "";
+        this._status.style.display = "none";
         this._loading = false;
         this._updateBtn();
         return;
@@ -225,13 +203,11 @@ class MaRadioCard extends HTMLElement {
 
       const typeLabel = bestType.charAt(0).toUpperCase() + bestType.slice(1);
       this._addLogItem(
-        `<ha-icon icon="mdi:check-circle" style="color:var(--primary-color)"></ha-icon>` +
-          `<span>Found: <strong>${this._escapeHtml(
-            bestItem.name
-          )}</strong> (${typeLabel})</span>`
+        `<span>✅ <strong>${this._escapeHtml(bestItem.name)}</strong> (${typeLabel}) · starting radio…</span>`
       );
 
-      this._showStatus(`▶ Starting radio: ${bestItem.name}…`);
+      this._status.textContent = `▶ Playing: ${bestItem.name} radio`;
+      this._status.style.display = "";
 
       await this._hass.callService(
         "music_assistant",
@@ -244,15 +220,12 @@ class MaRadioCard extends HTMLElement {
         { entity_id: this._config.player_entity }
       );
 
-      this._showStatus(`🎵 Now playing: ${bestItem.name} radio`);
-      this._addLogItem(
-        `<ha-icon icon="mdi:radio" style="color:var(--primary-color)"></ha-icon>` +
-          `<span>Radio started on ${this._escapeHtml(
-            this._config.player_entity
-          )}</span>`
-      );
+      this._status.textContent = `🎵 Radio: ${bestItem.name}`;
+      this._addLogItem(`<span>📻 Playing on ${this._escapeHtml(this._config.player_entity)}</span>`);
     } catch (err) {
-      this._showError(`Error: ${err.message || "Something went wrong"}`);
+      this._error.textContent = `Error: ${err.message || "Something went wrong"}`;
+      this._error.style.display = "";
+      this._status.style.display = "none";
       console.error("MA Radio Card error:", err);
     } finally {
       this._loading = false;
@@ -261,7 +234,7 @@ class MaRadioCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 3;
+    return 2;
   }
 
   static getStubConfig() {
@@ -279,5 +252,5 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "ma-radio-card",
   name: "MA Radio Card",
-  description: "Search and start Music Assistant radio from any search term",
+  description: "Start Music Assistant radio from any search term",
 });
