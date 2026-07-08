@@ -24,11 +24,12 @@ class MaRadioCard extends HTMLElement {
       );
     this._config = {
       title: config.title || "MA Radio",
+      icon: config.icon || "mdi:radio",
       config_entry_id: config.config_entry_id,
       player_entity: config.player_entity || "",
     };
     if (!this._config.player_entity) {
-      console.warn("MA Radio Card: No player_entity configured");
+      console.warn("MA Radio Card: No player_entity configured — playback will not work until one is set.");
     }
   }
 
@@ -36,69 +37,168 @@ class MaRadioCard extends HTMLElement {
     this.innerHTML = `
       <ha-card>
         <div class="ma-radio-content">
-          <div class="ma-radio-row">
-            <input
-              type="text"
-              id="ma-radio-input"
-              class="ma-radio-input"
-              placeholder="Artist, genre, mood, playlist…"
-              autocomplete="off"
-            >
-            <ha-button id="ma-radio-btn" disabled>▶</ha-button>
+          <div class="ma-radio-header">
+            <div class="ma-radio-avatar">
+              <ha-icon icon="${this._config.icon}"></ha-icon>
+            </div>
+            <div class="ma-radio-title-wrap">
+              <div class="ma-radio-title">${this._escapeHtml(this._config.title)}</div>
+              <div class="ma-radio-subtitle" id="ma-radio-subtitle">Search to start a radio</div>
+            </div>
           </div>
-          <div id="ma-radio-status" class="ma-radio-msg ma-radio-status"></div>
-          <div id="ma-radio-error" class="ma-radio-msg ma-radio-error"></div>
+
+          <div class="ma-radio-row">
+            <div class="ma-radio-input-wrap">
+              <ha-icon class="ma-radio-input-icon" icon="mdi:magnify"></ha-icon>
+              <input
+                type="text"
+                id="ma-radio-input"
+                class="ma-radio-input"
+                placeholder="Artist, genre, mood, playlist…"
+                autocomplete="off"
+              >
+            </div>
+            <ha-icon-button id="ma-radio-btn" class="ma-radio-play-btn" icon="mdi:play" disabled></ha-icon-button>
+          </div>
+
+          <div id="ma-radio-status" class="ma-radio-chip ma-radio-status"></div>
+          <div id="ma-radio-error" class="ma-radio-chip ma-radio-error"></div>
           <div id="ma-radio-log" class="ma-radio-log"></div>
         </div>
       </ha-card>
       <style>
+        ha-card {
+          border-radius: var(--ha-card-border-radius, 12px);
+          box-shadow: var(--ha-card-box-shadow, 0 1px 2px rgba(0,0,0,0.08));
+        }
         .ma-radio-content {
-          padding: 12px 16px;
+          padding: 12px 16px 16px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
         }
+
+        /* Header: Mushroom-style icon avatar + title/subtitle */
+        .ma-radio-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .ma-radio-avatar {
+          width: 40px;
+          height: 40px;
+          flex-shrink: 0;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(var(--rgb-primary-color, 3, 169, 244), 0.15);
+          color: rgb(var(--rgb-primary-color, 3, 169, 244));
+        }
+        .ma-radio-avatar ha-icon {
+          --mdc-icon-size: 22px;
+        }
+        .ma-radio-title-wrap {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
+        }
+        .ma-radio-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: var(--primary-text-color, #212121);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .ma-radio-subtitle {
+          font-size: 12px;
+          color: var(--secondary-text-color, #727272);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        /* Input row */
         .ma-radio-row {
           display: flex;
           gap: 8px;
           align-items: center;
         }
+        .ma-radio-input-wrap {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          height: 40px;
+          padding: 0 12px;
+          border-radius: 12px;
+          background: rgba(var(--rgb-primary-text-color, 0, 0, 0), 0.05);
+          box-sizing: border-box;
+        }
+        .ma-radio-input-icon {
+          --mdc-icon-size: 18px;
+          color: var(--secondary-text-color, #999);
+          flex-shrink: 0;
+        }
         .ma-radio-input {
           flex: 1;
           min-width: 0;
-          height: 40px;
-          padding: 0 12px;
-          border: 1px solid var(--divider-color, rgba(0,0,0,0.12));
-          border-radius: 8px;
-          background: var(--input-fill, var(--card-background-color, #fff));
+          height: 100%;
+          border: none;
+          background: transparent;
           color: var(--primary-text-color, #000);
-          font-size: 15px;
+          font-size: 14px;
           font-family: var(--paper-font-body_-_font-family, inherit);
           outline: none;
-          transition: border-color 0.2s;
-          box-sizing: border-box;
-        }
-        .ma-radio-input:focus {
-          border-color: var(--primary-color, #03a9f4);
         }
         .ma-radio-input::placeholder {
           color: var(--secondary-text-color, #999);
         }
-        .ma-radio-msg {
-          font-size: 14px;
-          padding: 4px 0;
+
+        .ma-radio-play-btn {
+          --mdc-icon-button-size: 40px;
+          --mdc-icon-size: 20px;
+          flex-shrink: 0;
+          border-radius: 12px;
+          background: rgba(var(--rgb-primary-color, 3, 169, 244), 0.15);
+          color: rgb(var(--rgb-primary-color, 3, 169, 244));
+          transition: opacity 0.2s;
+        }
+        .ma-radio-play-btn[disabled] {
+          opacity: 0.4;
+        }
+        .ma-radio-play-btn.loading {
+          animation: ma-radio-spin 0.8s linear infinite;
+        }
+        @keyframes ma-radio-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        /* Status / error as Mushroom-style chips */
+        .ma-radio-chip {
+          font-size: 13px;
+          font-weight: 500;
+          padding: 6px 12px;
+          border-radius: 10px;
           display: none;
+          width: fit-content;
         }
         .ma-radio-status {
-          color: var(--primary-color, #03a9f4);
+          color: rgb(var(--rgb-primary-color, 3, 169, 244));
+          background: rgba(var(--rgb-primary-color, 3, 169, 244), 0.12);
         }
         .ma-radio-error {
           color: var(--error-color, #db4437);
+          background: rgba(var(--rgb-error-color, 219, 68, 55), 0.12);
         }
+
         .ma-radio-log {
-          font-size: 13px;
+          font-size: 12px;
           color: var(--secondary-text-color, #727272);
-          padding: 2px 0;
+          padding: 0 2px;
           min-height: 0;
         }
         .ma-radio-log .item {
@@ -115,6 +215,7 @@ class MaRadioCard extends HTMLElement {
     this._status = this.querySelector("#ma-radio-status");
     this._error = this.querySelector("#ma-radio-error");
     this._log = this.querySelector("#ma-radio-log");
+    this._subtitle = this.querySelector("#ma-radio-subtitle");
 
     this._input.addEventListener("input", () => {
       this._query = this._input.value;
@@ -160,11 +261,13 @@ class MaRadioCard extends HTMLElement {
 
     this._loading = true;
     this._btn.disabled = true;
+    this._btn.classList.add("loading");
     this._status.style.display = "none";
     this._error.style.display = "none";
     this._clearLog();
     this._status.textContent = "🔍 Searching…";
     this._status.style.display = "";
+    this._subtitle.textContent = "Searching…";
 
     try {
       const result = await this._hass.callWS({
@@ -196,7 +299,9 @@ class MaRadioCard extends HTMLElement {
         this._error.textContent = `No results for "${query}". Try a different search term.`;
         this._error.style.display = "";
         this._status.style.display = "none";
+        this._subtitle.textContent = "Search to start a radio";
         this._loading = false;
+        this._btn.classList.remove("loading");
         this._updateBtn();
         return;
       }
@@ -221,25 +326,29 @@ class MaRadioCard extends HTMLElement {
       );
 
       this._status.textContent = `🎵 Radio: ${bestItem.name}`;
+      this._subtitle.textContent = `Now playing: ${bestItem.name}`;
       this._addLogItem(`<span>📻 Playing on ${this._escapeHtml(this._config.player_entity)}</span>`);
     } catch (err) {
       this._error.textContent = `Error: ${err.message || "Something went wrong"}`;
       this._error.style.display = "";
       this._status.style.display = "none";
+      this._subtitle.textContent = "Search to start a radio";
       console.error("MA Radio Card error:", err);
     } finally {
       this._loading = false;
+      this._btn.classList.remove("loading");
       this._updateBtn();
     }
   }
 
   getCardSize() {
-    return 2;
+    return 3;
   }
 
   static getStubConfig() {
     return {
       title: "MA Radio",
+      icon: "mdi:radio",
       config_entry_id: "",
       player_entity: "",
     };
