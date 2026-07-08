@@ -67,7 +67,7 @@ class MaRadioCard extends HTMLElement {
         </div>
       </ha-card>
       <style>
-        :host {
+        .ma-radio-content {
           --icon-size: 40px;
           --icon-border-radius: 12px;
           --icon-symbol-size: 22px;
