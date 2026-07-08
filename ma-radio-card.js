@@ -29,7 +29,7 @@ class MaRadioCard extends HTMLElement {
       player_entity: config.player_entity || "",
     };
     if (!this._config.player_entity) {
-      console.warn("MA Radio Card: No player_entity configured  --  playback will not work until one is set.");
+      console.warn("MA Radio Card: No player_entity configured -- playback will not work until one is set.");
     }
   }
 
@@ -37,13 +37,13 @@ class MaRadioCard extends HTMLElement {
     this.innerHTML = `
       <ha-card>
         <div class="ma-radio-content">
-          <div class="ma-radio-header">
-            <div class="ma-radio-avatar">
-              <ha-icon icon="${this._config.icon}"></ha-icon>
+          <div class="ma-radio-state-item">
+            <div class="ma-radio-shape-icon" id="ma-radio-shape">
+              <ha-icon class="ma-radio-state-icon" icon="${this._config.icon}"></ha-icon>
             </div>
-            <div class="ma-radio-title-wrap">
-              <div class="ma-radio-title">${this._escapeHtml(this._config.title)}</div>
-              <div class="ma-radio-subtitle" id="ma-radio-subtitle">Search to start a radio</div>
+            <div class="ma-radio-state-info">
+              <span class="ma-radio-primary">${this._escapeHtml(this._config.title)}</span>
+              <span class="ma-radio-secondary" id="ma-radio-subtitle">Search to start a radio</span>
             </div>
           </div>
 
@@ -67,56 +67,79 @@ class MaRadioCard extends HTMLElement {
         </div>
       </ha-card>
       <style>
+        :host {
+          --icon-size: 40px;
+          --icon-border-radius: 12px;
+          --icon-symbol-size: 22px;
+          --spacing: 12px;
+          --control-height: 40px;
+        }
         ha-card {
           border-radius: var(--ha-card-border-radius, 12px);
           box-shadow: var(--ha-card-box-shadow, 0 1px 2px rgba(0,0,0,0.08));
-        }
-        .ma-radio-content {
-          padding: 12px 16px 16px;
+          height: 100%;
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          justify-content: var(--layout-align, stretch);
+        }
+        .ma-radio-content {
+          padding: var(--spacing) calc(var(--spacing) + 4px);
+          display: flex;
+          flex-direction: column;
+          gap: var(--spacing);
+          flex: 1;
         }
 
-        /* Header: Mushroom-style icon avatar + title/subtitle */
-        .ma-radio-header {
+        /* Mushroom-style state-item: icon + info row */
+        .ma-radio-state-item {
           display: flex;
+          flex-direction: row;
           align-items: center;
-          gap: 12px;
+          gap: var(--spacing);
         }
-        .ma-radio-avatar {
-          width: 40px;
-          height: 40px;
-          flex-shrink: 0;
-          border-radius: 12px;
+
+        /* Mushroom-style shape-icon with colored background */
+        .ma-radio-shape-icon {
+          width: var(--icon-size);
+          height: var(--icon-size);
+          flex: none;
+          border-radius: var(--icon-border-radius);
           display: flex;
           align-items: center;
           justify-content: center;
           background: rgba(var(--rgb-primary-color, 3, 169, 244), 0.15);
           color: rgb(var(--rgb-primary-color, 3, 169, 244));
         }
-        .ma-radio-avatar ha-icon {
-          --mdc-icon-size: 22px;
+        .ma-radio-state-icon {
+          --mdc-icon-size: var(--icon-symbol-size);
         }
-        .ma-radio-title-wrap {
+
+        /* Mushroom-style state-info: primary + secondary column */
+        .ma-radio-state-info {
+          min-width: 0;
+          flex: 1;
           display: flex;
           flex-direction: column;
-          min-width: 0;
         }
-        .ma-radio-title {
-          font-size: 14px;
+        .ma-radio-primary {
           font-weight: 500;
+          font-size: 14px;
+          line-height: 1.3;
           color: var(--primary-text-color, #212121);
-          white-space: nowrap;
-          overflow: hidden;
+          letter-spacing: 0.1px;
           text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
         }
-        .ma-radio-subtitle {
+        .ma-radio-secondary {
+          font-weight: 400;
           font-size: 12px;
+          line-height: 1.3;
           color: var(--secondary-text-color, #727272);
-          white-space: nowrap;
-          overflow: hidden;
+          letter-spacing: 0.1px;
           text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
         }
 
         /* Input row */
@@ -131,11 +154,15 @@ class MaRadioCard extends HTMLElement {
           display: flex;
           align-items: center;
           gap: 8px;
-          height: 40px;
-          padding: 0 12px;
-          border-radius: 12px;
+          height: var(--control-height);
+          padding: 0 var(--spacing);
+          border-radius: var(--icon-border-radius);
           background: rgba(var(--rgb-primary-text-color, 0, 0, 0), 0.05);
           box-sizing: border-box;
+          transition: background-color 280ms ease-out;
+        }
+        .ma-radio-input-wrap:focus-within {
+          background: rgba(var(--rgb-primary-text-color, 0, 0, 0), 0.08);
         }
         .ma-radio-input-icon {
           --mdc-icon-size: 18px;
@@ -157,14 +184,15 @@ class MaRadioCard extends HTMLElement {
           color: var(--secondary-text-color, #999);
         }
 
+        /* Play button - using ha-icon-button with icon attribute */
         .ma-radio-play-btn {
-          --mdc-icon-button-size: 40px;
+          --mdc-icon-button-size: var(--control-height);
           --mdc-icon-size: 20px;
           flex-shrink: 0;
-          border-radius: 12px;
+          border-radius: var(--icon-border-radius);
           background: rgba(var(--rgb-primary-color, 3, 169, 244), 0.15);
           color: rgb(var(--rgb-primary-color, 3, 169, 244));
-          transition: opacity 0.2s;
+          transition: opacity 280ms ease-out;
         }
         .ma-radio-play-btn[disabled] {
           opacity: 0.4;
@@ -177,14 +205,15 @@ class MaRadioCard extends HTMLElement {
           to { transform: rotate(360deg); }
         }
 
-        /* Status / error as Mushroom-style chips */
+        /* Mushroom-style chip for status/error */
         .ma-radio-chip {
-          font-size: 13px;
           font-weight: 500;
+          font-size: 13px;
           padding: 6px 12px;
           border-radius: 10px;
           display: none;
           width: fit-content;
+          box-sizing: border-box;
         }
         .ma-radio-status {
           color: rgb(var(--rgb-primary-color, 3, 169, 244));
@@ -195,6 +224,7 @@ class MaRadioCard extends HTMLElement {
           background: rgba(var(--rgb-error-color, 219, 68, 55), 0.12);
         }
 
+        /* Log */
         .ma-radio-log {
           font-size: 12px;
           color: var(--secondary-text-color, #727272);
@@ -216,6 +246,7 @@ class MaRadioCard extends HTMLElement {
     this._error = this.querySelector("#ma-radio-error");
     this._log = this.querySelector("#ma-radio-log");
     this._subtitle = this.querySelector("#ma-radio-subtitle");
+    this._shape = this.querySelector("#ma-radio-shape");
 
     this._input.addEventListener("input", () => {
       this._query = this._input.value;
