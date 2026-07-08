@@ -13,9 +13,9 @@ A custom Lovelace card for **Home Assistant + Music Assistant** that lets you ty
 - **Keyboard support** — press Enter to search
 - **Works with any MA provider** — Spotify, Tidal, Qobuz, local files, etc.
 
-## Screenshots
+## Screenshot
 
-*(Add screenshots here after installation)*
+![MA Radio Card](Screenshot.png)
 
 ## Requirements
 
