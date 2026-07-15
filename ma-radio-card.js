@@ -225,6 +225,7 @@ class MaRadioCardEditor extends HTMLElement {
     this._loadingData = false;
     this._errorMsg = "";
     this._rendered = false;
+    this._dataLoaded = false;
   }
 
   setConfig(config) {
@@ -236,7 +237,7 @@ class MaRadioCardEditor extends HTMLElement {
 
   set hass(hass) {
     this._hass = hass;
-    if (hass) this._fetchData();
+    if (hass && !this._dataLoaded) this._fetchData();
   }
 
   async _fetchData() {
@@ -254,12 +255,14 @@ class MaRadioCardEditor extends HTMLElement {
 
       if (this._maConfigs.length === 0) this._errorMsg = "No Music Assistant integration found. Install and configure Music Assistant first.";
       else if (this._maPlayers.length === 0) this._errorMsg = "No Music Assistant media players found. Add a player in Music Assistant first.";
+
+      this._dataLoaded = true;
     } catch (err) {
       this._errorMsg = "Failed to load integration data. Check browser console.";
       console.error("MA Radio Card editor error:", err);
     } finally {
       this._loadingData = false;
-      this._render();
+      if (!this._rendered) this._render();
     }
   }
 
