@@ -224,11 +224,12 @@ class MaRadioCardEditor extends HTMLElement {
     this._maPlayers = [];
     this._loadingData = false;
     this._errorMsg = "";
-    this._initialRenderDone = false;
+    this._rendered = false;
   }
 
   setConfig(config) {
     this._config = Object.assign({ title: "MA Radio", icon: "mdi:radio", default_type: "auto" }, config || {});
+    if (this._rendered) this._syncValues();
   }
 
   get value() { return this._config; }
@@ -264,6 +265,9 @@ class MaRadioCardEditor extends HTMLElement {
 
   _render() {
     const config = this._config;
+    const entryMap = {};
+    this._maConfigs.forEach(c => { entryMap[c.entry_id] = c.title; });
+
     this.innerHTML = `
       <style>
         .ma-editor{padding:16px 8px;display:flex;flex-direction:column;gap:16px}
@@ -279,7 +283,7 @@ class MaRadioCardEditor extends HTMLElement {
       </style>
       <div class="ma-editor">
         ${this._errorMsg ? `<div class="ma-editor-error">${this._escapeHtml(this._errorMsg)}</div>` : ""}
-        ${this._loadingData && this._maConfigs.length === 0 && !this._initialRenderDone ? `<div class="ma-editor-loading">Loading Music Assistant data...</div>` : ""}
+        ${this._loadingData && this._maConfigs.length === 0 && !this._rendered ? `<div class="ma-editor-loading">Loading Music Assistant data...</div>` : ""}
         <ha-textfield id="ma-editor-title" label="Title" value="${this._escapeHtml(config.title || "")}"></ha-textfield>
         <div class="ma-editor-icon-row">
           <ha-icon-picker id="ma-editor-icon" label="Icon" value="${config.icon || "mdi:radio"}"></ha-icon-picker>
@@ -291,6 +295,7 @@ class MaRadioCardEditor extends HTMLElement {
         </ha-select>
         <ha-select id="ma-editor-player" label="Player Entity" value="${config.player_entity || ""}" naturalMenuWidth>
           <ha-list-item value="">-- Select player --</ha-list-item>
+          ${this._maPlayers.map(p => `<ha-list-item value="${this._escapeHtml(p.entity_id)}">${this._escapeHtml(p.name)} ${this._escapeHtml(p.entity_id)} [${this._escapeHtml(entryMap[p.config_entry_id] || p.config_entry_id)}]</ha-list-item>`).join("")}
         </ha-select>
         <div class="ma-editor-section-label">Default Search Type</div>
         <div id="ma-editor-type-chips" class="ma-editor-chip-row">
@@ -302,19 +307,19 @@ class MaRadioCardEditor extends HTMLElement {
         </div>
       </div>
     `;
-    this._initialRenderDone = true;
-    this._populatePlayerSelect();
+    this._rendered = true;
     this._wireEvents();
   }
 
-  _populatePlayerSelect() {
+  _syncValues() {
+    const titleField = this.querySelector("#ma-editor-title");
+    const iconPicker = this.querySelector("#ma-editor-icon");
+    const entrySelect = this.querySelector("#ma-editor-entry");
     const playerSelect = this.querySelector("#ma-editor-player");
-    if (!playerSelect) return;
-    const selectedEntry = this._maConfigs.find(c => c.entry_id === this._config.config_entry_id);
-    const filtered = this._maPlayers.filter(p => !this._config.config_entry_id || !selectedEntry || p.config_entry_id === this._config.config_entry_id);
-    playerSelect.innerHTML = '<ha-list-item value="">-- Select player --</ha-list-item>' +
-      filtered.map(p => `<ha-list-item value="${this._escapeHtml(p.entity_id)}">${this._escapeHtml(p.name)} (${this._escapeHtml(p.entity_id)})</ha-list-item>`).join("");
-    playerSelect.value = this._config.player_entity || "";
+    if (titleField) titleField.value = this._config.title || "";
+    if (iconPicker) iconPicker.value = this._config.icon || "mdi:radio";
+    if (entrySelect) entrySelect.value = this._config.config_entry_id || "";
+    if (playerSelect) playerSelect.value = this._config.player_entity || "";
   }
 
   _wireEvents() {
@@ -328,7 +333,7 @@ class MaRadioCardEditor extends HTMLElement {
     entrySelect.addEventListener("change", () => {
       this._config.config_entry_id = entrySelect.value;
       this._config.player_entity = "";
-      this._populatePlayerSelect();
+      if (playerSelect) playerSelect.value = "";
       this._dispatchChange();
     });
     playerSelect.addEventListener("change", () => { this._config.player_entity = playerSelect.value; this._dispatchChange(); });
